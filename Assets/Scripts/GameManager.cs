@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; 
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -6,12 +7,17 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("UI Settings")]
-    [SerializeField] private TextMeshProUGUI scoreText; // Texto de puntos en la pared
-    [SerializeField] private TextMeshProUGUI ammoText;  // Texto de balas en la pared
-    [SerializeField] private GameObject menuInicioPanel; // El panel gris que se va a ocultar
+    [SerializeField] private TextMeshProUGUI scoreText; 
+    [SerializeField] private TextMeshProUGUI ammoText;  
+    [SerializeField] private GameObject menuInicioPanel; 
+
+    [Header("UI Game Over")]
+    [SerializeField] private GameObject canvasGameOver; 
+    // 1. NUEVA VARIABLE: Para el texto de puntuación de la pantalla final
+    [SerializeField] private TextMeshProUGUI finalScoreText; 
 
     [Header("Gameplay Settings")]
-    [SerializeField] private GameObject pistolaVR; // El objeto de la pistola para activarlo
+    [SerializeField] private GameObject pistolaVR; 
 
     private int score = 0;
     private int bullets = 0;
@@ -19,92 +25,76 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) { Instance = this; }
+        else { Destroy(gameObject); }
     }
 
     void Start()
     {
-        // Al arrancar, nos aseguramos de que el menú se vea y la pistola esté apagada
         if (menuInicioPanel != null) menuInicioPanel.SetActive(true);
         if (pistolaVR != null) pistolaVR.SetActive(false);
+        if (canvasGameOver != null) canvasGameOver.SetActive(false); // Nos aseguramos de que empiece apagado
 
         ActualizarTextoUI();
     }
 
-    // ESTA FUNCIÓN LA LLAMARÁ EL BOTÓN "INICIO"
     public void ComenzarJuego()
     {
         juegoIniciado = true;
-        bullets = 7; // Cargamos las 7 balas iniciales
+        bullets = 7; 
 
-        // ¡AQUÍ ESTÁ EL TRUCO! 
-        // En lugar de apagar solo el panel de adentro, apagamos TODO el Canvas del menú
-        if (menuInicioPanel != null) 
-        {
-            menuInicioPanel.SetActive(false); 
-        }
-        
-        if (pistolaVR != null) 
-        {
-            pistolaVR.SetActive(true);
-        }
+        if (menuInicioPanel != null) menuInicioPanel.SetActive(false);
+        if (pistolaVR != null) pistolaVR.SetActive(true);
 
         ActualizarTextoUI();
     }
 
     public void AddPoints(int pointsToAdd)
     {
-        if (!juegoIniciado) return; // Si no ha iniciado el juego, no suma puntos
+        if (!juegoIniciado) return; 
 
         score += pointsToAdd;
-        Debug.Log("¡Puntos totales: " + score + "!");
-        
         ActualizarTextoUI();
     }
 
-    // LLAMA A ESTA FUNCIÓN DESDE TU SCRIPT DE DISPARO CUANDO GASTES UNA BALA
     public void RestarBala()
     {
         if (!juegoIniciado) return;
 
-        if (bullets >= 1)
+        if (bullets > 0)
         {
             bullets--;
             ActualizarTextoUI();
         }
 
-        if (bullets <= 1)
+        if (bullets <= 0)
         {
-            Debug.Log("¡Te quedaste sin plomo!");
-            // Aquí en el futuro puedes poner que se acabe la partida
+            // 2. CUANDO SE ACABAN LAS BALAS: Mandamos la puntuación al texto final antes de mostrar la pantalla
+            if (finalScoreText != null)
+            {
+                finalScoreText.text = "FIN DEL JUEGO. PULSA REINICIAR\n PARA VOLVER A ECHAR PLOMO\n Puntuación: " + score;
+            }
+
+            if (canvasGameOver != null) 
+            {
+                canvasGameOver.SetActive(true);
+            }
         }
+    }
+
+    public void ReiniciarJuego()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public bool CanShoot()
+    {
+        return juegoIniciado && bullets > 0;
     }
 
     private void ActualizarTextoUI()
     {
-        if (scoreText != null)
-        {
-            scoreText.text = "Puntos: " + score;
-        }
-
-        if (ammoText != null)
-        {
-            // Si el juego no ha iniciado, puedes mostrar "Balas: --" o "Balas: 7"
-            ammoText.text = "Balas: " + (juegoIniciado ? bullets.ToString() : "7") + " de 7";
-        }
+        if (scoreText != null) scoreText.text = "Puntos: " + score;
+        if (ammoText != null) ammoText.text = "Balas: " + (juegoIniciado ? bullets.ToString() : "7");
     }
-    // Agrega esto al final de tu GameManager.cs
-    public bool CanShoot()
-    {
-        // Regresa true solo si el juego ya empezó y todavía quedan balas
-        return juegoIniciado && bullets > 0;
-    }
-    
 }
