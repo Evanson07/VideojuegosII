@@ -1,14 +1,17 @@
 using UnityEngine;
+using TMPro; // Para que reconozca TextMeshPro
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    [Header("UI Settings")]
+    [SerializeField] private TextMeshProUGUI scoreText; // La ranura para el texto de puntos
+
     private int score = 0;
 
     void Awake()
     {
-        // Aseguramos que solo exista un GameManager en la escena
         if (Instance == null)
         {
             Instance = this;
@@ -19,12 +22,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Función pública para sumar puntos desde otros scripts
+    void Start()
+    {
+        ActualizarTextoUI();
+    }
+
     public void AddPoints(int pointsToAdd)
     {
         score += pointsToAdd;
         Debug.Log("¡Puntos totales: " + score + "!");
         
-        // Aquí en el futuro puedes actualizar un texto en la interfaz (UI) de tu juego
+        ActualizarTextoUI();
+    }
+
+    private void ActualizarTextoUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "PUNTOS: " + score.ToString("D2");
+        }
     }
 }
